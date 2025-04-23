@@ -3,6 +3,7 @@ module com.example.employeesystem {
     requires javafx.fxml;
 
     requires com.dlsc.formsfx;
+    requires java.logging;
 
     opens com.example.employeesystem to javafx.fxml;
     exports com.example.employeesystem;

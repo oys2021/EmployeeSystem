@@ -3,15 +3,36 @@ package com.example.employeesystem.employee;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
+
 public class EmployeeDatabase<T> {
 
     HashMap<T,Employee<T>> employeeHashMap;
+
+    Set<String> validDepartments = Set.of("HR", "Finance", "Engineering", "Marketing");
 
     public EmployeeDatabase(){
         this.employeeHashMap = new HashMap<>();
     }
 
-    public String addEmployee(Employee<T> employee ){
+    public String addEmployee(Employee<T> employee ) throws InvalidDepartmentException, InvalidSalaryException, EmployeeDetailRequiredException {
+
+        if (employee.getName() == null || employee.getName().trim().isEmpty() ){
+            throw new EmployeeDetailRequiredException("Employee name is required.");
+        }
+
+        if (employee.getEmployeeId() == null || employee.getName().trim().isEmpty()){
+            throw new EmployeeDetailRequiredException("Employee ID is required.");
+        }
+
+        if (employee.getSalary() < 0){
+            throw new InvalidSalaryException("Salary cannot be negative.");
+        }
+
+        if (!validDepartments.contains(employee.getDepartment())){
+            throw new InvalidDepartmentException("Department is not valid or does not exist.These are the list of Departments you can consider ; \"HR\", \"Finance\", \"Engineering\", \"Marketing\"");
+        }
+
         if (employeeHashMap.containsKey(employee.getEmployeeId())){
             return "Employee with Id" + employee.getEmployeeId() + "already exist";
         }
@@ -19,9 +40,11 @@ public class EmployeeDatabase<T> {
         return  "Employee" + employee.getName() + " created successfully";
     }
 
-    public String removeEmployee(T employeeId) {
+
+    public String removeEmployee(T employeeId) throws EmployeeNotFoundException {
+
         if (!employeeHashMap.containsKey(employeeId)) {
-            return "Employee with ID " + employeeId + " does not exist";
+            throw new EmployeeNotFoundException("Employee with ID " + employeeId + " does not exist");
         }
         employeeHashMap.remove(employeeId);
         return "Employee with ID " + employeeId + " has been removed successfully";
@@ -32,11 +55,13 @@ public class EmployeeDatabase<T> {
        return  employeeHashMap.values();
     }
 
-    public String updateEmployeeDetails(T employeeId, String field, Object newValue) {
+    public String updateEmployeeDetails(T employeeId, String field, Object newValue) throws EmployeeNotFoundException {
         Employee<T> employee = employeeHashMap.get(employeeId);
 
+
         if (employee == null) {
-            return "Employee with ID " + employeeId + " not found.";
+
+            throw new EmployeeNotFoundException("Employee with ID " + employeeId + " does not exist");
         }
 
         switch (field.toLowerCase()) {
