@@ -23,7 +23,7 @@ public class Employee<T> implements Comparable<Employee<T>> {
         return employeeId;
     }
 
-    public String getName(){
+    public String getName() {
         return  name;
     }
 

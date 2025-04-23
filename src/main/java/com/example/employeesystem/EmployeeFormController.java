@@ -1,9 +1,6 @@
 package com.example.employeesystem;
 
-import com.example.employeesystem.employee.Employee;
-import com.example.employeesystem.employee.EmployeeDatabase;
-import com.example.employeesystem.employee.EmployeePerformanceComparator;
-import com.example.employeesystem.employee.EmployeeSalaryComparator;
+import com.example.employeesystem.employee.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
@@ -13,6 +10,9 @@ import javafx.collections.transformation.FilteredList;
 
 import java.util.Comparator;
 import java.util.UUID;
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
 
 public class EmployeeFormController {
 
@@ -46,6 +46,8 @@ public class EmployeeFormController {
     private EmployeeDatabase<UUID> database = new EmployeeDatabase<>();
     private ObservableList<Employee<UUID>> employeeList = FXCollections.observableArrayList();
 
+    private static final Logger logger = Logger.getLogger(EmployeeFormController.class.getName());
+
 
     @FXML
     public void initialize() {
@@ -70,7 +72,6 @@ public class EmployeeFormController {
                 "Salary (Low to High)",
                 "Rating (High to Low)",
                 "Experience (High to Low)"
-
         );
 
     }
@@ -81,25 +82,49 @@ public class EmployeeFormController {
         try {
             String name = nameField.getText();
             String dept = departmentField.getText();
-            double salary = Double.parseDouble(salaryField.getText());
-            double rating = Double.parseDouble(ratingField.getText());
-            int exp = Integer.parseInt(experienceField.getText());
+            String salaryStr = salaryField.getText();
+            String ratingStr = ratingField.getText();
+            String expStr = experienceField.getText();
             boolean isActive = isActiveBox.isSelected();
+
+            if (name == null || name.trim().isEmpty() ||
+                    dept == null || dept.trim().isEmpty() ||
+                    salaryStr == null || salaryStr.trim().isEmpty() ||
+                    ratingStr == null || ratingStr.trim().isEmpty() ||
+                    expStr == null || expStr.trim().isEmpty()) {
+
+                showAlert("Input Error", "All fields must be filled in.");
+                return;
+            }
+
+            double salary = Double.parseDouble(salaryStr);
+            double rating = Double.parseDouble(ratingStr);
+            int exp = Integer.parseInt(expStr);
 
             Employee<UUID> emp = new Employee<>(UUID.randomUUID(), name, dept, salary, rating, exp, isActive);
             database.addEmployee(emp);
             employeeList.add(emp);
 
             clearForm();
-        } catch (Exception e) {
-            showAlert("Invalid Input", "Please fill in all fields correctly.");
+
+        } catch (EmployeeDetailRequiredException e) {
+            logger.log(Level.WARNING, e.getMessage(), e);
+            showAlert("Error:", e.getMessage());
+
+        } catch (InvalidSalaryException ex) {
+            logger.log(Level.WARNING, ex.getMessage(), ex);
+            showAlert("Error:", ex.getMessage());
+
+        } catch (InvalidDepartmentException ex) {
+            logger.log(Level.WARNING, ex.getMessage(), ex);
+            showAlert("Error:", ex.getMessage());
+
+        } catch (NumberFormatException ex) {
+            logger.log(Level.WARNING, "Invalid number input", ex);
+            showAlert("Input Error", "Please enter valid numeric values for salary, rating, and experience.");
+
         }
     }
-
-
-
-
-
 
 
     @FXML
@@ -108,14 +133,24 @@ public class EmployeeFormController {
         String deptSearch = searchDepartmentField.getText().trim().toLowerCase();
         double minRating = parseDouble(minRatingField.getText().trim(), 0.0);
         double maxRating = parseDouble(maxRatingField.getText().trim(), Double.MAX_VALUE);
+        double minSalary = parseDouble(minRatingField.getText().trim(), 0.0);
+        double maxSalary = parseDouble(maxRatingField.getText().trim(), Double.MAX_VALUE);
 
         filteredEmployees.setPredicate(emp -> {
             boolean nameMatches = nameSearch.isEmpty() || emp.getName().toLowerCase().contains(nameSearch);
             boolean deptMatches = deptSearch.isEmpty() || emp.getDepartment().toLowerCase().contains(deptSearch);
             boolean ratingMatches = emp.getPerformanceRating() >= minRating && emp.getPerformanceRating() <= maxRating;
-            return nameMatches && deptMatches && ratingMatches;
+            boolean salaryMatches = emp.getSalary() >= minSalary && emp.getSalary() <= maxSalary;
+            return nameMatches && deptMatches && ratingMatches && salaryMatches;
         });
+
+        if (filteredEmployees.isEmpty()) {
+            showAlert("No Results", "No employees found matching the search criteria.");
+            logger.info("Search returned no results.");
+        }
     }
+
+
 
     @FXML
     public void clearSearch() {
@@ -144,11 +179,15 @@ public class EmployeeFormController {
             showAlert("No Selection", "Please select an employee to remove.");
             return;
         }
-        database.removeEmployee(selected.getEmployeeId());
-        employeeList.remove(selected);
+        try {
+            database.removeEmployee(selected.getEmployeeId());
+            employeeList.remove(selected);
+        } catch (EmployeeNotFoundException e) {
+            logger.log(Level.WARNING, e.getMessage(), e);
+            showAlert("Error:",e.getMessage());
+        }
+
     }
-
-
 
 
     @FXML
@@ -183,8 +222,6 @@ public class EmployeeFormController {
             sortedEmployees.setComparator(comparator);
         }
     }
-
-
 
     private void clearForm() {
         nameField.clear();
