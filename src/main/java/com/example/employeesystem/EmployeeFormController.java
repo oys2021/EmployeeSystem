@@ -127,26 +127,30 @@ public class EmployeeFormController {
     }
 
 
-
-
-
-
-
-
     @FXML
     public void searchEmployees() {
         String nameSearch = searchNameField.getText().trim().toLowerCase();
         String deptSearch = searchDepartmentField.getText().trim().toLowerCase();
         double minRating = parseDouble(minRatingField.getText().trim(), 0.0);
         double maxRating = parseDouble(maxRatingField.getText().trim(), Double.MAX_VALUE);
+        double minSalary = parseDouble(minRatingField.getText().trim(), 0.0);
+        double maxSalary = parseDouble(maxRatingField.getText().trim(), Double.MAX_VALUE);
 
         filteredEmployees.setPredicate(emp -> {
             boolean nameMatches = nameSearch.isEmpty() || emp.getName().toLowerCase().contains(nameSearch);
             boolean deptMatches = deptSearch.isEmpty() || emp.getDepartment().toLowerCase().contains(deptSearch);
             boolean ratingMatches = emp.getPerformanceRating() >= minRating && emp.getPerformanceRating() <= maxRating;
-            return nameMatches && deptMatches && ratingMatches;
+            boolean salaryMatches = emp.getSalary() >= minSalary && emp.getSalary() <= maxSalary;
+            return nameMatches && deptMatches && ratingMatches && salaryMatches;
         });
+
+        if (filteredEmployees.isEmpty()) {
+            showAlert("No Results", "No employees found matching the search criteria.");
+            logger.info("Search returned no results.");
+        }
     }
+
+
 
     @FXML
     public void clearSearch() {

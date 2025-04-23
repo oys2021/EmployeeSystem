@@ -109,33 +109,67 @@ public class EmployeeDatabase<T> {
     }
 
 
-    public String sortByDepartment(String department){
-        return employeeHashMap.values()
-                .stream()
-                .filter(emp -> emp.getDepartment().equalsIgnoreCase(department))
+    public String sortByDepartment(String department) throws NoEmployeesFoundException {
+        if (employeeHashMap.isEmpty()) {
+            throw new NoEmployeesFoundException("No employee data available in the system.");
+        }
+
+        List<Employee<T>> filtered = employeeHashMap.values().stream()
+                .filter(emp -> emp.getDepartment() != null && emp.getDepartment().equalsIgnoreCase(department))
+                .sorted(Comparator.comparing(Employee::getName, Comparator.nullsLast(String::compareTo)))
+                .toList();
+
+        if (filtered.isEmpty()) {
+            throw new NoEmployeesFoundException("No employees found in the department: " + department);
+        }
+
+        return filtered.stream()
                 .map(Employee::toString)
-                .collect(Collectors.joining());
+                .collect(Collectors.joining("\n"));
     }
 
-    public String findEmployeesByName(String searchTerm) {
-        return employeeHashMap.values().stream()
-                .filter(emp -> emp.getName().toLowerCase().contains(searchTerm.toLowerCase()))
+
+    public String findEmployeesByName(String searchTerm) throws EmployeeSearchException {
+        List<Employee<T>> filtered = employeeHashMap.values().stream()
+                .filter(emp -> emp.getName() != null && emp.getName().toLowerCase().contains(searchTerm.toLowerCase()))
+                .toList();
+
+        if (filtered.isEmpty()) {
+            throw new EmployeeSearchException("No employees found with name containing: " + searchTerm);
+        }
+
+        return filtered.stream()
                 .map(Employee::toString)
                 .collect(Collectors.joining(", "));
     }
 
-    public String findEmployeesByRating(double minRating) {
-        return employeeHashMap.values().stream()
+
+    public String findEmployeesByRating(double minRating) throws EmployeeSearchException {
+        List<Employee<T>> filtered = employeeHashMap.values().stream()
                 .filter(emp -> emp.getPerformanceRating() >= minRating)
+                .toList();
+
+        if (filtered.isEmpty()) {
+            throw new EmployeeSearchException("No employees found with rating >= " + minRating);
+        }
+
+        return filtered.stream()
                 .map(Employee::toString)
                 .collect(Collectors.joining(", "));
     }
 
 
 
-    public String findEmployeesBySalaryRange(double minSalary, double maxSalary) {
-        return employeeHashMap.values().stream()
+    public String findEmployeesBySalaryRange(double minSalary, double maxSalary) throws EmployeeSearchException {
+        List<Employee<T>> filtered = employeeHashMap.values().stream()
                 .filter(emp -> emp.getSalary() >= minSalary && emp.getSalary() <= maxSalary)
+                .toList();
+
+        if (filtered.isEmpty()) {
+            throw new EmployeeSearchException("No employees found with salary between " + minSalary + " and " + maxSalary);
+        }
+
+        return filtered.stream()
                 .map(Employee::toString)
                 .collect(Collectors.joining(", "));
     }
