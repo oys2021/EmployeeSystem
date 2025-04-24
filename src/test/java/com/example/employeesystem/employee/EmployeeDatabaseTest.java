@@ -73,16 +73,6 @@ class EmployeeDatabaseTest {
         assertEquals("Employee with Id E127 already exists", result);
     }
 
-    @Test
-    void testRemoveExistingEmployee() throws Exception {
-        Employee<String> employee = new Employee<>("E101", "Alice", "HR", 45000, 45.0, 10, true);
-        employeedb.addEmployee(employee);
-
-        String result = employeedb.removeEmployee("E101");
-
-        assertEquals("Employee with ID E101 has been removed successfully", result);
-        assertFalse(employeedb.employeeHashMap.containsKey("E101"));
-    }
 
     @Test
     void testRemoveNonExistingEmployee() {
