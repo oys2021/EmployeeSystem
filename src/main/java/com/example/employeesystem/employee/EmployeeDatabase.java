@@ -15,9 +15,10 @@ public class EmployeeDatabase<T> {
         this.employeeHashMap = new HashMap<>();
     }
 
-    public String addEmployee(Employee<T> employee ) throws InvalidDepartmentException, InvalidSalaryException, EmployeeDetailRequiredException {
 
-        if (employee.getName() == null || employee.getName().trim().isEmpty() ){
+    public String addEmployee(Employee<T> employee) throws InvalidDepartmentException, InvalidSalaryException, EmployeeDetailRequiredException {
+
+        if (employee.getName() == null || employee.getName().trim().isEmpty()) {
             throw new EmployeeDetailRequiredException("Employee name is required.");
         }
 
@@ -25,20 +26,22 @@ public class EmployeeDatabase<T> {
             throw new EmployeeDetailRequiredException("Employee ID is required.");
         }
 
-        if (employee.getSalary() < 0){
+        if (employee.getSalary() < 0) {
             throw new InvalidSalaryException("Salary cannot be negative.");
         }
 
-        if (!validDepartments.contains(employee.getDepartment())){
-            throw new InvalidDepartmentException("Department is not valid or does not exist.These are the list of Departments you can consider ; \"HR\", \"Finance\", \"Engineering\", \"Marketing\"");
+        if (!validDepartments.contains(employee.getDepartment())) {
+            throw new InvalidDepartmentException("Department is not valid or does not exist. These are the list of Departments you can consider: \"HR\", \"Finance\", \"Engineering\", \"Marketing\"");
         }
 
-        if (employeeHashMap.containsKey(employee.getEmployeeId())){
-            return "Employee with Id" + employee.getEmployeeId() + "already exist";
+        if (employeeHashMap.containsKey(employee.getEmployeeId())) {
+            return "Employee with Id " + employee.getEmployeeId() + " already exists";
         }
-        employeeHashMap.put(employee.getEmployeeId(),employee);
-        return  "Employee" + employee.getName() + " created successfully";
+
+        employeeHashMap.put(employee.getEmployeeId(), employee);
+        return "Employee " + employee.getName() + " created successfully";
     }
+
 
 
     public String removeEmployee(T employeeId) throws EmployeeNotFoundException {
@@ -136,6 +139,20 @@ public class EmployeeDatabase<T> {
 
         if (filtered.isEmpty()) {
             throw new EmployeeSearchException("No employees found with name containing: " + searchTerm);
+        }
+
+        return filtered.stream()
+                .map(Employee::toString)
+                .collect(Collectors.joining(", "));
+    }
+
+    public String findEmployeesByDepartment(String searchTerm) throws EmployeeSearchException {
+        List<Employee<T>> filtered = employeeHashMap.values().stream()
+                .filter(emp -> emp.getDepartment() != null && emp.getDepartment().toLowerCase().contains(searchTerm.toLowerCase()))
+                .toList();
+
+        if (filtered.isEmpty()) {
+            throw new EmployeeSearchException("No employees found with department containing: " + searchTerm);
         }
 
         return filtered.stream()
